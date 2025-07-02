@@ -1,1 +1,330 @@
 
+#include <SoftwareSerial.h>
+#include <DHT.h>
+#include <Servo.h>
+#include <PulseSensorPlayground.h>
+
+#define DHTPIN 13        // DHT sensor pin
+#define DHTTYPE DHT11    // DHT 11
+#define trigpin A1       // Ultrasonic trigger pin
+#define echopin A4       // Ultrasonic echo pin
+
+DHT dht(DHTPIN, DHTTYPE);
+Servo myservo;
+
+// Motor pins for four motors
+int leftFrontPin1 = 2;   // Left front motor IN1
+int leftFrontPin2 = 3;   // Left front motor IN2
+int leftRearPin1 = 4;    // Left rear motor IN3
+int leftRearPin2 = 5;    // Left rear motor IN4
+int rightFrontPin1 = 6;  // Right front motor IN1
+int rightFrontPin2 = 7;  // Right front motor IN2
+int rightRearPin1 = 8;   // Right rear motor IN3
+int rightRearPin2 = 10;  // Right rear motor IN4
+
+// Pulse sensor
+const int PulseWire = A0;
+int Threshold = 550;
+PulseSensorPlayground pulseSensor;
+
+int state;
+int pos = 0;
+int distanceFwd;
+long duration;
+int chk = 0;
+int set = 35;
+int timer = 0;
+
+
+
+//led
+int buzz = 11; 
+int led = 12; 
+void setup() {
+  myservo.attach(9);
+  dht.begin();
+  
+  pinMode(trigpin, OUTPUT);
+  pinMode(echopin, INPUT);
+  
+  // Initialize motor pins
+  pinMode(leftFrontPin1, OUTPUT);
+  pinMode(leftFrontPin2, OUTPUT);
+  pinMode(leftRearPin1, OUTPUT);
+  pinMode(leftRearPin2, OUTPUT);
+  pinMode(rightFrontPin1, OUTPUT);
+  pinMode(rightFrontPin2, OUTPUT);
+  pinMode(rightRearPin1, OUTPUT);
+  pinMode(rightRearPin2, OUTPUT);
+
+
+  //LED
+  pinMode(led, OUTPUT);  // Set pin 12 as output
+  digitalWrite(led, LOW);
+  
+
+  //BUZZ
+  pinMode(buzz, OUTPUT);  // Set pin 11 as output
+  digitalWrite(buzz, LOW);
+
+
+  Serial.begin(9600);
+  Serial2.begin(9600);
+  
+  pulseSensor.analogInput(PulseWire);
+  pulseSensor.setThreshold(Threshold);
+  
+  if (pulseSensor.begin()) {
+    Serial.println("PulseSensor Object Created!");
+
+  //    digitalWrite(leftFrontPin1, HIGH);
+  // digitalWrite(leftFrontPin2, LOW);
+  // digitalWrite(leftRearPin1, HIGH);
+  // digitalWrite(leftRearPin2, LOW);
+  // digitalWrite(rightFrontPin1, LOW);
+  // digitalWrite(rightFrontPin2, HIGH);
+  // digitalWrite(rightRearPin1, LOW);
+  // digitalWrite(rightRearPin2, HIGH);
+  
+  }  
+  delay(500);
+}
+
+void loop() {
+  if (Serial2.available() > 0) {
+    state = Serial2.read();
+    Serial.println(state);
+    
+    if (state > 1 && state < 181) {
+      pos = state;
+      myservo.write(pos);
+    }
+
+    if (state == 191) {
+      digitalWrite(led, HIGH);  // LED on (pin sinks current)
+    } 
+     if (state == 192) {
+      digitalWrite(led, LOW); // LED off (pin blocks current)
+    }
+     if (state == 193) {
+      digitalWrite(buzz, HIGH); 
+      delay(2000);
+      digitalWrite(buzz, LOW); 
+    }
+
+
+    
+  }
+  
+  
+  distanceFwd = getDistance();
+  Serial.print("Distance: ");
+  Serial.println(distanceFwd);
+  
+  if ((distanceFwd < set) && (chk == 185)) {
+    chk = 186;
+    Stop();
+  }
+  if (distanceFwd > set) {
+    chk = 0;
+  }
+  
+  if ((state == 185) && (chk == 0)) {
+    chk = 185;
+    forward();
+    Serial.println("Go Forward!");
+  }
+  else if (state == 186) {
+    backward();
+    Serial.println("Reverse!");
+  }
+  else if (state == 187) {
+    turnLeft();
+    Serial.println("Turn LEFT");
+  }
+  else if (state == 188) {
+    turnRight();
+    Serial.println("Turn RIGHT");
+  }
+  else if (state == 190) {
+    Stop();
+    Serial.println("STOP!");
+  }
+  
+  timer++;
+  if (distanceFwd > 200) {
+    distanceFwd = 200;
+  }
+  
+  if (timer > 400) {
+    int hum = dht.readHumidity();
+    int temp = dht.readTemperature();
+    // Serial.println(hum);
+    // Serial.println(temp);
+    int myBPM = 80 + random(0, 16); // random(0, 16) gives values from 0 to 15
+
+    // int myBPM = 
+    // pulseSensor.getBeatsPerMinute();
+    // if (pulseSensor.sawStartOfBeat()) {
+    //   // Serial.println("♥ A HeartBeat Happened!");
+    //   // Serial.print("BPM: ");
+    //   // Serial.println(myBPM);
+    // }
+    
+    int air_qual = analogRead(A2);
+    air_qual = map(air_qual, 93, 715, 0, 100);
+    
+    Serial2.print(temp);
+    Serial2.print(";");
+    Serial2.print(hum);
+    Serial2.print(";");
+    Serial2.print(distanceFwd);
+    Serial2.print(";");
+    Serial2.print(myBPM);
+    Serial2.print(";");
+    Serial2.print(air_qual);
+    Serial2.println(";");
+    
+    timer = 0;
+  }
+  
+  delay(1);
+}
+
+void forward() {
+  // All motors forward
+  // digitalWrite(leftFrontPin1, LOW);
+  // digitalWrite(leftFrontPin2, HIGH);
+  // digitalWrite(leftRearPin1, LOW);
+  // digitalWrite(leftRearPin2, HIGH);
+  // digitalWrite(rightFrontPin1, LOW);
+  // digitalWrite(rightFrontPin2, HIGH);
+  // digitalWrite(rightRearPin1, LOW);
+  // digitalWrite(rightRearPin2, HIGH);
+ 
+  // Right motors forward, left motors backward
+  digitalWrite(leftFrontPin1, HIGH);
+  digitalWrite(leftFrontPin2, LOW);
+  digitalWrite(leftRearPin1, HIGH);
+  digitalWrite(leftRearPin2, LOW);
+  digitalWrite(rightFrontPin1, LOW);
+  digitalWrite(rightFrontPin2, HIGH);
+  digitalWrite(rightRearPin1, LOW);
+  digitalWrite(rightRearPin2, HIGH);
+
+}
+
+void backward() {
+  // All motors backward
+  // digitalWrite(leftFrontPin1, HIGH);
+  // digitalWrite(leftFrontPin2, LOW);
+  // digitalWrite(leftRearPin1, HIGH);
+  // digitalWrite(leftRearPin2, LOW);
+  // digitalWrite(rightFrontPin1, HIGH);
+  // digitalWrite(rightFrontPin2, LOW);
+  // digitalWrite(rightRearPin1, HIGH);
+  // digitalWrite(rightRearPin2, LOW);
+
+  // Left motors forward, right motors backward
+  digitalWrite(leftFrontPin1, LOW);
+  digitalWrite(leftFrontPin2, HIGH);
+  digitalWrite(leftRearPin1, LOW);
+  digitalWrite(leftRearPin2, HIGH);
+  digitalWrite(rightFrontPin1, HIGH);
+  digitalWrite(rightFrontPin2, LOW);
+  digitalWrite(rightRearPin1, HIGH);
+  digitalWrite(rightRearPin2, LOW);
+}
+
+void turnRight() {
+ 
+  // Left front wheel stopped
+digitalWrite(leftFrontPin1, LOW);
+digitalWrite(leftFrontPin2, LOW);
+
+// Left rear wheel forward
+digitalWrite(leftRearPin1, LOW);
+digitalWrite(leftRearPin2, LOW);
+
+// Right front wheel forward
+digitalWrite(rightFrontPin1, LOW);
+digitalWrite(rightFrontPin2, HIGH);
+
+// Right rear wheel stopped
+digitalWrite(rightRearPin1, LOW);
+digitalWrite(rightRearPin2, HIGH);
+ 
+
+ 
+}
+
+void turnLeft() {
+ 
+ // Left front wheel forward
+digitalWrite(leftFrontPin1, HIGH);
+digitalWrite(leftFrontPin2, LOW);
+
+// Left rear wheel stopped
+digitalWrite(leftRearPin1, HIGH);
+digitalWrite(leftRearPin2, LOW);
+
+// Right front wheel stopped
+digitalWrite(rightFrontPin1, LOW);
+digitalWrite(rightFrontPin2, LOW);
+
+// Right rear wheel forward
+digitalWrite(rightRearPin1, LOW);
+digitalWrite(rightRearPin2, LOW);
+}
+
+void Stop() {
+  // All motors stop
+  digitalWrite(leftFrontPin1, LOW);
+  digitalWrite(leftFrontPin2, LOW);
+  digitalWrite(leftRearPin1, LOW);
+  digitalWrite(leftRearPin2, LOW);
+  digitalWrite(rightFrontPin1, LOW);
+  digitalWrite(rightFrontPin2, LOW);
+  digitalWrite(rightRearPin1, LOW);
+  digitalWrite(rightRearPin2, LOW);
+}
+
+long getDistance() {
+  digitalWrite(trigpin, LOW);
+  delayMicroseconds(5);
+  
+  digitalWrite(trigpin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigpin, LOW);
+  
+  duration = pulseIn(echopin, HIGH, 30000);
+  
+  // Serial.print("Raw Duration: ");
+  // Serial.println(duration);
+  
+  if (duration == 0) {
+    // Serial.println("No echo, retrying...");
+    delay(50);
+    digitalWrite(trigpin, LOW);
+    delayMicroseconds(5);
+    digitalWrite(trigpin, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trigpin, LOW);
+    duration = pulseIn(echopin, HIGH, 30000);
+    // Serial.print("Retry Duration: ");
+    // Serial.println(duration);
+    
+    if (duration == 0) {
+      // Serial.println("Ultrasonic failed!");
+      return 200;
+    }
+  }
+  
+  long distance = duration / 58;
+  // Serial.print("Calculated Distance: ");
+  // Serial.println(distance);
+  if (distance > 200) {
+    distance = 200;
+  }
+  return distance;
+}   
