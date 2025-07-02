@@ -2,7 +2,7 @@
 
 The smart wheelchair designed for people with special needs features advanced capabilities such as measuring heart rate and temperature. It sends all data directly to a dedicated app, allowing the user to easily monitor their health status. The app also sends instant notifications to the user in case of any changes in their health condition. The wheelchair is equipped with smart sensors and safety features to avoid obstacles and can also detect harmful gases in the surrounding environment to alert the user of potential danger. Additionally, it includes an umbrella to protect the user from sunlight and rain, making it suitable for both indoor and outdoor mobility in various weather conditions.
 
-![Smart Wheelchair](Smart%20Chair/SmartWheelchairPhoto.png)
+![Smart Wheelchair](Smart%20Wheelchair/SmartWheelchairPhoto.png)
 
 🎥 [Watch Smart Wheelchair Demo](Videos/Smart%20Wheelchair%201.mp4)
 
