@@ -10,11 +10,12 @@ The smart wheelchair designed for people with special needs features advanced ca
 
 ## 🔧 Features
 
-- Movement control using mobile app (via Bluetooth)
-- Obstacle avoidance using ultrasonic sensors
-- Health monitoring 
-- Environmental sensing 
-- Automatic umbrella opening using servo motor
+- Movement Control via Mobile App 
+- Obstacle Avoidance 
+- Health Monitoring
+- Environmental Sensing
+- Umbrella Control
+- Location & Health Data Sharing with Caregivers
 
 
 ## 🧠 How It Works
